@@ -1,0 +1,12 @@
+name: sample
+image: docker
+kind: true
+setup:
+  - "kind create cluster"
+  - 'api_server_port="$(docker port kind-control-plane 6443/tcp | awk -F: ''END { print $NF }'')" && kubectl config set-cluster kind-kind --server "https://127.0.0.1:$api_server_port"'
+  - "kubectl --context kind-kind wait node --all --for=condition=Ready --timeout=180s"
+  - "helm install cert-manager oci://quay.io/jetstack/charts/cert-manager --version v1.20.2 --namespace cert-manager --create-namespace --set crds.enabled=true"
+  - "kubectl --context kind-kind --namespace cert-manager rollout status deployment/cert-manager --timeout=300s"
+  - "kubectl --context kind-kind --namespace cert-manager rollout status deployment/cert-manager-cainjector --timeout=300s"
+  - "kubectl --context kind-kind --namespace cert-manager rollout status deployment/cert-manager-webhook --timeout=300s"
+  - "kubectl --context kind-kind wait pod --all --all-namespaces --for=condition=Ready --timeout=300s"

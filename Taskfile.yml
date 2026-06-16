@@ -1,0 +1,99 @@
+version: "3"
+
+vars:
+  BIN_DIR: bin
+  SPIND_BIN: "{{.BIN_DIR}}/spind"
+  GUEST_AGENT_BIN: "{{.BIN_DIR}}/spind-guest-agent"
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  # Quality gates
+  check:
+    desc: Run all checks
+    cmds:
+      - task: format:check
+      - task: lint
+      - task: typecheck
+      - task: test
+
+  ci:
+    desc: Run CI pipeline (frozen install + all checks)
+    cmds:
+      - bun install --frozen-lockfile
+      - task: check
+
+  ci:macos:
+    desc: Run macOS CI pipeline (frozen install + e2e)
+    cmds:
+      - bun install --frozen-lockfile
+      - task: e2e
+
+  format:
+    desc: Format source files
+    cmds:
+      - bunx oxfmt --write .
+
+  format:check:
+    desc: Check source formatting
+    cmds:
+      - bunx oxfmt --check .
+
+  lint:
+    desc: Run the linter
+    cmds:
+      - bunx oxlint
+
+  test:
+    desc: Run Go tests
+    cmds:
+      - go list ./... | grep -v '/node_modules/' | xargs go test
+
+  typecheck:
+    desc: Type check without emitting
+    cmds:
+      - bunx tsc -b --noEmit
+
+  # Build tasks
+  build:
+    desc: Build local spind binaries
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - go build -o {{.SPIND_BIN}} ./cmd/spind
+      - CGO_ENABLED=0 GOOS=linux GOARCH="$(go env GOARCH)" go build -o {{.GUEST_AGENT_BIN}} ./cmd/agent
+      - |
+        if [ "$(uname -s)" = "Darwin" ]; then
+          {{.SPIND_BIN}} prepare-vz-runner
+        else
+          echo "skipping managed Virtualization.framework runner build on $(uname -s)"
+        fi
+
+  build:ts:
+    desc: Build TypeScript files
+    cmds:
+      - bunx tsc -b
+
+  build-image-docker:
+    desc: Build the Docker image
+    deps:
+      - build
+    cmds:
+      - "{{.SPIND_BIN}} image build docker --force"
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf js *.tsbuildinfo
+
+  # End-to-end tests
+  e2e:
+    desc: Run end-to-end tests
+    deps:
+      - build-image-docker
+    cmds:
+      - bun test tests/e2e --timeout 2700000 --bail
+    env:
+      EXECA_VERBOSE: short # "short" | "full" | "none"

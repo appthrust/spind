@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.17.2/.schema/devbox.schema.json",
+  "packages": {
+    "go": "1.24",
+    "go-task": "latest",
+    "bun": "latest",
+    "cpio": "latest",
+    "genext2fs": "latest",
+    "squashfsTools": "latest",
+    "e2fsprogs": "latest",
+    "docker-client": "latest",
+    "passt": {
+      "version": "latest",
+      "excluded_platforms": ["aarch64-darwin", "x86_64-darwin"]
+    },
+    "terraform": "latest",
+    "kind": "latest",
+    "kubectl": "latest",
+    "kubernetes-helm": "latest"
+  },
+  "shell": {
+    "init_hook": ["export PATH=\"$PWD/bin:$PATH\"", "echo 'spind devbox ready'"]
+  }
+}

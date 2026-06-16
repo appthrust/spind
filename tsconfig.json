@@ -1,0 +1,12 @@
+{
+  "extends": ["@tsconfig/bun", "@tsconfig/strictest"],
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./js",
+    "rootDir": ".",
+    "declaration": true,
+    "declarationMap": true,
+    "types": ["bun"]
+  },
+  "include": ["tests/e2e/**/*.ts"]
+}
