@@ -199,7 +199,7 @@ docker_build("tilt-sample", ".")
 
 k8s_yaml("k8s.yaml")
 
-k8s_resource("tilt-sample", port_forwards=8080)
+k8s_resource("tilt-sample", port_forwards="8080:80")
 ```
 
 Run Tilt after the spind environment is ready.

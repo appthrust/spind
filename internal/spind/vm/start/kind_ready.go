@@ -80,7 +80,7 @@ func (m *Manager) configureKubernetesEndpoint(ctx context.Context, name string, 
 		state.KubernetesLastError = err.Error()
 		return state
 	}
-	pid, err := startKubernetesRelay(ctx, name, vmDir, metadata, state)
+	pid, err := startKubernetesRelay(ctx, name, vmDir, metadata, state, kindMetadata)
 	if err != nil {
 		state.KubernetesLastError = err.Error()
 		return state
@@ -119,39 +119,18 @@ func allocateKubernetesPort(preferred int) (int, error) {
 	return listener.Addr().(*net.TCPAddr).Port, nil
 }
 
-func startKubernetesRelay(ctx context.Context, name string, vmDir string, metadata spindvm.Metadata, state spindvm.State) (int, error) {
-	return startTCPRelay(ctx, name, vmDir, metadata, state, state.KubernetesRelayLogPath, state.KubernetesAPIServerPort, state.KubernetesAPIServerTargetPort, "Kubernetes")
+func startKubernetesRelay(ctx context.Context, name string, vmDir string, metadata spindvm.Metadata, state spindvm.State, kindMetadata spindkind.Metadata) (int, error) {
+	return startTCPRelay(ctx, name, vmDir, metadata, state, state.KubernetesRelayLogPath, state.KubernetesAPIServerPort, state.KubernetesAPIServerTargetPort, "Kubernetes", kindMetadata.Distribution == spindkind.DistributionK3d)
 }
 
 func startRegistryRelay(ctx context.Context, name string, vmDir string, metadata spindvm.Metadata, state spindvm.State) (int, error) {
-	return startTCPRelay(ctx, name, vmDir, metadata, state, state.RegistryRelayLogPath, state.RegistryPort, state.RegistryTargetPort, "registry")
+	return startTCPRelay(ctx, name, vmDir, metadata, state, state.RegistryRelayLogPath, state.RegistryPort, state.RegistryTargetPort, "registry", true)
 }
 
-func startTCPRelay(ctx context.Context, name string, vmDir string, metadata spindvm.Metadata, state spindvm.State, logPath string, listenPort int, targetPort int, service string) (int, error) {
-	args := []string{
-		"kubernetes-relay",
-		name,
-		"--listen-port", strconv.Itoa(listenPort),
-		"--target-port", strconv.Itoa(targetPort),
-		"--guest-port", fmt.Sprintf("%d", state.DockerTCPForwardGuestPort),
-	}
-	switch metadata.Backend {
-	case BackendVirtualizationFramework:
-		if state.ExecSocketPath == "" {
-			return 0, errors.New("exec socket path is missing")
-		}
-		args = append(args,
-			"--ssh-socket", state.ExecSocketPath,
-			"--ssh-key", filepath.Join(vmDir, vmSSHPrivateKeyName),
-			"--ssh-user", metadata.ExecUser,
-		)
-	case BackendCloudHypervisor:
-		if state.CloudHypervisorVsockSocketPath == "" {
-			return 0, errors.New("Cloud Hypervisor vsock socket path is missing")
-		}
-		args = append(args, "--vsock", state.CloudHypervisorVsockSocketPath)
-	default:
-		return 0, fmt.Errorf("unsupported backend %q", metadata.Backend)
+func startTCPRelay(ctx context.Context, name string, vmDir string, metadata spindvm.Metadata, state spindvm.State, logPath string, listenPort int, targetPort int, service string, preferGuestIP bool) (int, error) {
+	args, err := tcpRelayArgs(name, vmDir, metadata, state, listenPort, targetPort, preferGuestIP)
+	if err != nil {
+		return 0, err
 	}
 	executable, err := os.Executable()
 	if err != nil {
@@ -175,6 +154,38 @@ func startTCPRelay(ctx context.Context, name string, vmDir string, metadata spin
 		return 0, fmt.Errorf("release %s relay process: %w", service, err)
 	}
 	return pid, nil
+}
+
+func tcpRelayArgs(name string, vmDir string, metadata spindvm.Metadata, state spindvm.State, listenPort int, targetPort int, preferGuestIP bool) ([]string, error) {
+	args := []string{
+		"kubernetes-relay",
+		name,
+		"--listen-port", strconv.Itoa(listenPort),
+		"--target-port", strconv.Itoa(targetPort),
+		"--guest-port", fmt.Sprintf("%d", state.DockerTCPForwardGuestPort),
+	}
+	switch metadata.Backend {
+	case BackendVirtualizationFramework:
+		if preferGuestIP && state.DockerGuestIPAddress != "" {
+			return append(args, "--guest-ip", state.DockerGuestIPAddress), nil
+		}
+		if state.ExecSocketPath == "" {
+			return nil, errors.New("exec socket path is missing")
+		}
+		args = append(args,
+			"--ssh-socket", state.ExecSocketPath,
+			"--ssh-key", filepath.Join(vmDir, vmSSHPrivateKeyName),
+			"--ssh-user", metadata.ExecUser,
+		)
+	case BackendCloudHypervisor:
+		if state.CloudHypervisorVsockSocketPath == "" {
+			return nil, errors.New("Cloud Hypervisor vsock socket path is missing")
+		}
+		args = append(args, "--vsock", state.CloudHypervisorVsockSocketPath)
+	default:
+		return nil, fmt.Errorf("unsupported backend %q", metadata.Backend)
+	}
+	return args, nil
 }
 
 func kubectlCheckGeneratedKubeconfig(ctx context.Context, kubeconfigPath string) error {
