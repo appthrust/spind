@@ -193,6 +193,8 @@ Tilt can auto-detect a k3d local registry through the `kube-public/local-registr
 A minimal Tiltfile looks like this.
 
 ```python
+allow_k8s_contexts("spind-tilt-sample")
+
 docker_build("tilt-sample", ".")
 
 k8s_yaml("k8s.yaml")
