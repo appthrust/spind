@@ -177,6 +177,7 @@ func Inspect(snapshotDir string, name string) Info {
 	info.ExecPort = metadata.ExecPort
 	info.KernelCommand = metadata.KernelCommandLine
 	info.KindReady = metadata.KindReady
+	info.K8sDistribution = metadata.K8sDistribution
 	if metadata.KindReady {
 		if kindMetadata, err := spindkind.ReadMetadata(snapshotDir); err == nil {
 			info.KindMetadata = kindMetadata

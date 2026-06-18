@@ -141,6 +141,15 @@ func Info(cfg config.Config, name string) (vmstore.Info, error) {
 		KubernetesAPIServerTargetPort: state.KubernetesAPIServerTargetPort,
 		KubernetesRelayPID:            state.KubernetesRelayPID,
 		KubernetesRelayLogPath:        state.KubernetesRelayLogPath,
+		RegistryReady:                 state.RegistryReady,
+		RegistryLastError:             state.RegistryLastError,
+		RegistryURL:                   state.RegistryURL,
+		RegistryPort:                  state.RegistryPort,
+		RegistryTargetPort:            state.RegistryTargetPort,
+		RegistryRelayPID:              state.RegistryRelayPID,
+		RegistryRelayLogPath:          state.RegistryRelayLogPath,
+		RegistryHostFromCluster:       state.RegistryHostFromCluster,
+		RegistryLocalHostingUpdated:   state.RegistryLocalHostingUpdated,
 		SerialLogPath:                 serialLogPath,
 		BackendLogPath:                backendLogPath,
 		EventLogPath:                  eventLogPath,
@@ -233,13 +242,14 @@ func logPaths(vmDir string, backend string, state vmstore.State) []string {
 			state.EventLogPath,
 			state.HostShareVirtioFSLogPath,
 			state.KubernetesRelayLogPath,
+			state.RegistryRelayLogPath,
 			filepath.Join(vmDir, "cloud-hypervisor.log"),
 			filepath.Join(vmDir, "serial.log"),
 			filepath.Join(vmDir, "cloud-hypervisor-event.log"),
 			filepath.Join(vmDir, "virtiofsd.log"),
 		)
 	default:
-		candidates = append(candidates, state.KubernetesRelayLogPath, filepath.Join(vmDir, vmstore.LogName))
+		candidates = append(candidates, state.KubernetesRelayLogPath, state.RegistryRelayLogPath, filepath.Join(vmDir, vmstore.LogName))
 	}
 	seen := map[string]bool{}
 	paths := make([]string, 0, len(candidates))

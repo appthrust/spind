@@ -1,6 +1,6 @@
 name: sample
 image: docker
-kind: true
+k8s: kind
 setup:
   - "kind create cluster"
   - 'api_server_port="$(docker port kind-control-plane 6443/tcp | awk -F: ''END { print $NF }'')" && kubectl config set-cluster kind-kind --server "https://127.0.0.1:$api_server_port"'

@@ -30,6 +30,7 @@ type Metadata struct {
 	MemoryMiB        int       `json:"memoryMiB,omitempty"`
 	ExecPort         uint32    `json:"execPort,omitempty"`
 	KindReady        bool      `json:"kindReady,omitempty"`
+	K8sDistribution  string    `json:"k8sDistribution,omitempty"`
 	KubeconfigPath   string    `json:"kubeconfigPath,omitempty"`
 }
 
@@ -91,6 +92,15 @@ type State struct {
 	KubernetesAPIServerTargetPort  int       `json:"kubernetesApiServerTargetPort,omitempty"`
 	KubernetesRelayPID             int       `json:"kubernetesRelayPid,omitempty"`
 	KubernetesRelayLogPath         string    `json:"kubernetesRelayLogPath,omitempty"`
+	RegistryReady                  bool      `json:"registryReady,omitempty"`
+	RegistryLastError              string    `json:"registryLastError,omitempty"`
+	RegistryURL                    string    `json:"registryUrl,omitempty"`
+	RegistryPort                   int       `json:"registryPort,omitempty"`
+	RegistryTargetPort             int       `json:"registryTargetPort,omitempty"`
+	RegistryRelayPID               int       `json:"registryRelayPid,omitempty"`
+	RegistryRelayLogPath           string    `json:"registryRelayLogPath,omitempty"`
+	RegistryHostFromCluster        string    `json:"registryHostFromCluster,omitempty"`
+	RegistryLocalHostingUpdated    bool      `json:"registryLocalHostingUpdated,omitempty"`
 	StartedAt                      time.Time `json:"startedAt,omitempty"`
 	LastStartDurationMS            int64     `json:"lastStartDurationMs,omitempty"`
 	UpdatedAt                      time.Time `json:"updatedAt"`
@@ -166,6 +176,15 @@ type Info struct {
 	KubernetesAPIServerTargetPort int
 	KubernetesRelayPID            int
 	KubernetesRelayLogPath        string
+	RegistryReady                 bool
+	RegistryLastError             string
+	RegistryURL                   string
+	RegistryPort                  int
+	RegistryTargetPort            int
+	RegistryRelayPID              int
+	RegistryRelayLogPath          string
+	RegistryHostFromCluster       string
+	RegistryLocalHostingUpdated   bool
 	SerialLogPath                 string
 	BackendLogPath                string
 	EventLogPath                  string

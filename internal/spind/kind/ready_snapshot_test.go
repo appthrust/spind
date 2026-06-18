@@ -131,3 +131,32 @@ func TestControlPlanePublishedPortsFromContainers(t *testing.T) {
 		t.Fatalf("ControlPlanePublishedPortsFromContainers = %#v, want %#v", ports, want)
 	}
 }
+
+func TestK3dAPIServerPublishedPortsFromContainersUsesLoadBalancer(t *testing.T) {
+	ports := APIServerPublishedPortsFromContainers([]spinddocker.ContainerSummary{
+		{
+			Names:  []string{"/k3d-dev-server-0"},
+			Labels: map[string]string{"k3d.role": "server"},
+			Ports: []spinddocker.PortMapping{
+				{PrivatePort: 6443, PublicPort: 35123, Type: "tcp"},
+			},
+		},
+		{
+			Names:  []string{"/k3d-dev-serverlb"},
+			Labels: map[string]string{"k3d.role": "loadbalancer"},
+			Ports: []spinddocker.PortMapping{
+				{PrivatePort: 6443, PublicPort: 35124, Type: "tcp"},
+			},
+		},
+	}, DistributionK3d)
+	want := []uint16{35124}
+	if !reflect.DeepEqual(ports, want) {
+		t.Fatalf("APIServerPublishedPortsFromContainers = %#v, want %#v", ports, want)
+	}
+}
+
+func TestValidateK3dServerPublishedPortAcceptsWildcardHost(t *testing.T) {
+	if err := ValidateDistributionServerPublishedPort(DistributionK3d, "https://0.0.0.0:35123", 35123, []uint16{35123}); err != nil {
+		t.Fatalf("ValidateDistributionServerPublishedPort() error = %v", err)
+	}
+}

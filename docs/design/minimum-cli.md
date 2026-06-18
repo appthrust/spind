@@ -148,7 +148,7 @@ spind は、ローカルに用意されたベースイメージからVMを作成
 - 一時provisioning VM名は `<project>-provisioning` とする。
 - provisioned snapshotがない場合、provisioning VMを作成し、`setup` command列をhost側で実行し、snapshotを作成する。
 - setup commandには `DOCKER_HOST`、`KUBECONFIG`、`SPIND_DOCKER_HOST`、`SPIND_KUBECONFIG`、`SPIND_PROJECT_NAME`、`SPIND_PROJECT_ROOT`、`SPIND_VM_NAME` を渡す。
-- `kind: true` の場合、snapshot作成時にkind-ready snapshotとして扱う。
+- `k8s: kind` または `k8s: k3d` の場合、snapshot作成時にKubernetes-ready snapshotとして扱う。
 - provisioning VMはsnapshot作成成功後に削除する。
 - 起動後、Docker endpointまたはVM別kubeconfigが利用できる場合は、`SHELL` に応じてfishまたはPOSIX shell向けの環境変数設定を表示する。
 - `--reprovision` は既存provisioned snapshotを使わず、setupからやり直す。
@@ -198,7 +198,7 @@ spind は、ローカルに用意されたベースイメージからVMを作成
 
 - 起動中かつexec readyな `<vm-name>` からsaved state snapshotを作成する。
 - 停止中VMからのsnapshot作成は失敗する。
-- `--kind --kubeconfig <path> --context <name>` が指定された場合、kind-ready snapshotとして作成する。
+- `--k8s=kind|k3d --kubeconfig <path> --context <name>` が指定された場合、Kubernetes-ready snapshotとして作成する。
 - 詳細は `docs/design/snapshot.md` に従う。
 - kind-ready snapshotの詳細は `docs/design/kind-ready-snapshot.md` に従う。
 

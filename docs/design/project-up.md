@@ -22,7 +22,7 @@ setup:
 
 - `name`: project名。省略時は `spind.yaml` があるdirectoryのbasename。
 - `image`: base image名。省略時は `docker`。
-- `kind`: kind-ready snapshotとして作るかどうか。省略時は `false`。
+- `k8s`: Kubernetes-ready snapshotとして作るdistribution。`kind` または `k3d`。省略時は通常snapshot。
 - `setup`: 初回provision時にhost側で実行するcommand列。省略時は空。
 
 ## 生成名
@@ -58,7 +58,7 @@ setup commandには次の環境変数を渡す。
 - `SPIND_PROJECT_ROOT`: project root。
 - `SPIND_VM_NAME`: provisioning VM名。
 
-`kind: true` の場合、snapshot作成時にkind-ready snapshotとして扱い、setup commandへ渡した `KUBECONFIG` をsnapshot作成時にも使う。
+`k8s: kind` または `k8s: k3d` の場合、snapshot作成時にKubernetes-ready snapshotとして扱い、setup commandへ渡した `KUBECONFIG` をsnapshot作成時にも使う。
 
 起動後、Docker endpointまたはVM別kubeconfigが利用できる場合、`spind up` は現在のshellで使える環境変数設定を表示する。
 

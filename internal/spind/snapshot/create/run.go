@@ -16,7 +16,7 @@ import (
 func Run(ctx context.Context, cfg config.Config, options Options, stdout io.Writer, stderr io.Writer) int {
 	manager := vmstart.NewManagerFromConfig(cfg)
 	createOptions := spindsnapshot.CreateOptions{
-		Kind:           options.Kind,
+		K8s:            options.K8s,
 		KubeconfigPath: options.Kubeconfig,
 		Context:        options.Context,
 	}

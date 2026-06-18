@@ -104,7 +104,7 @@ Cloud Hypervisor backendの必須ファイル:
 - `<snapshot-name>` が既に存在する場合、上書きせずに失敗する。
 - Virtualization.framework backendのsnapshot作成は、Swift実行部にsaved state保存を要求し、`vf/state.vzvmsave`、`vf/disk.img`、`vf/kernel`、`vf/initramfs`、必要なmetadataを保存して行う。
 - Cloud Hypervisor backendのsnapshot作成は、Cloud Hypervisor REST APIでVMをpauseし、snapshot directoryへ `config.json`、`memory-ranges`、`state.json` を保存し、対応する `kernel`、`initramfs`、`disk.img` と必要なmetadataを保存して行う。
-- `--kind --kubeconfig <path> --context <name>` が指定された場合、kind-ready snapshotとして扱い、詳細は `docs/design/kind-ready-snapshot.md` に従う。
+- `--k8s=kind|k3d --kubeconfig <path> --context <name>` が指定された場合、Kubernetes-ready snapshotとして扱い、詳細は `docs/design/k8s-distribution-and-registry.md` に従う。
 - snapshot作成後、元VMは停止済みとして扱う。
 
 ### `spind snapshot list`

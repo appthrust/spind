@@ -39,6 +39,7 @@ func PrintVMInfo(stdout io.Writer, info spindvm.Info) {
 	PrintDockerInfo(stdout, info)
 	PrintHostShareInfo(stdout, info)
 	PrintKubernetesInfo(stdout, info)
+	PrintRegistryInfo(stdout, info)
 	if !info.StartedAt.IsZero() {
 		fmt.Fprintf(stdout, "startedAt: %s\n", info.StartedAt.Format(time.RFC3339))
 	}
@@ -238,6 +239,38 @@ func PrintKubernetesInfo(stdout io.Writer, info spindvm.Info) {
 	}
 	if info.KubernetesRelayLogPath != "" {
 		fmt.Fprintf(stdout, "kubernetesLogPath: %s\n", info.KubernetesRelayLogPath)
+	}
+}
+
+func PrintRegistryInfo(stdout io.Writer, info spindvm.Info) {
+	if info.RegistryURL == "" && info.RegistryLastError == "" && info.RegistryTargetPort == 0 {
+		return
+	}
+	if info.RegistryReady {
+		fmt.Fprintln(stdout, "registry: ready")
+	} else {
+		fmt.Fprintln(stdout, "registry: unavailable")
+	}
+	if info.RegistryURL != "" {
+		fmt.Fprintf(stdout, "registryUrl: %s\n", info.RegistryURL)
+	}
+	if info.RegistryPort != 0 {
+		fmt.Fprintf(stdout, "registryPort: %d\n", info.RegistryPort)
+	}
+	if info.RegistryTargetPort != 0 {
+		fmt.Fprintf(stdout, "registryTargetPort: %d\n", info.RegistryTargetPort)
+	}
+	if info.RegistryRelayPID != 0 {
+		fmt.Fprintf(stdout, "registryRelayPid: %d\n", info.RegistryRelayPID)
+	}
+	if info.RegistryHostFromCluster != "" {
+		fmt.Fprintf(stdout, "registryHostFromCluster: %s\n", info.RegistryHostFromCluster)
+	}
+	if info.RegistryLastError != "" {
+		fmt.Fprintf(stdout, "registryLastError: %s\n", info.RegistryLastError)
+	}
+	if info.RegistryRelayLogPath != "" {
+		fmt.Fprintf(stdout, "registryLogPath: %s\n", info.RegistryRelayLogPath)
 	}
 }
 

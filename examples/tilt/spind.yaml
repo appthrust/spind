@@ -1,0 +1,7 @@
+name: tilt-sample
+image: docker
+k8s: k3d
+setup:
+  - "k3d cluster create tilt-sample --registry-create tilt-sample-registry --kubeconfig-update-default=false"
+  - 'k3d kubeconfig get tilt-sample > "$SPIND_KUBECONFIG"'
+  - "kubectl --context k3d-tilt-sample wait node --all --for=condition=Ready --timeout=180s"

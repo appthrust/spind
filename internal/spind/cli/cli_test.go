@@ -183,8 +183,8 @@ func TestParseCommandLineAcceptsSnapshotCreate(t *testing.T) {
 	}
 }
 
-func TestParseCommandLineAcceptsKindSnapshotCreate(t *testing.T) {
-	cli, ctx, exitCode, handled := Parse([]string{"snapshot", "create", "kind-ready", "--vm", "kind-base", "--kind", "--kubeconfig", "/tmp/config", "--context", "kind-dev"}, io.Discard, io.Discard)
+func TestParseCommandLineAcceptsK8sSnapshotCreate(t *testing.T) {
+	cli, ctx, exitCode, handled := Parse([]string{"snapshot", "create", "kind-ready", "--vm", "kind-base", "--k8s=kind", "--kubeconfig", "/tmp/config", "--context", "kind-dev"}, io.Discard, io.Discard)
 	if handled {
 		t.Fatalf("parseCommandLine handled with exitCode=%d", exitCode)
 	}
@@ -192,7 +192,7 @@ func TestParseCommandLineAcceptsKindSnapshotCreate(t *testing.T) {
 		t.Fatalf("ctx.Command() = %q, want snapshot create <snapshot-name>", ctx.Command())
 	}
 	create := cli.Snapshot.Create
-	if create.Name != "kind-ready" || create.VM != "kind-base" || !create.Kind || create.Kubeconfig != "/tmp/config" || create.Context != "kind-dev" {
+	if create.Name != "kind-ready" || create.VM != "kind-base" || create.K8s != "kind" || create.Kubeconfig != "/tmp/config" || create.Context != "kind-dev" {
 		t.Fatalf("Snapshot.Create = %#v", create)
 	}
 }

@@ -182,7 +182,7 @@ devbox run task e2e
 ### kind-ready snapshot
 
 - host側kindでDocker Host上にkind clusterを作成できる。
-- `spind snapshot create kind-ready --vm kind-base --kind --kubeconfig ~/.kube/config --context kind-dev` が成功する。
+- `spind snapshot create kind-ready --vm kind-base --k8s=kind --kubeconfig ~/.kube/config --context kind-dev` が成功する。
 - 指定contextが存在しない場合は失敗する。
 - snapshot作成前ready checkで `kubectl get nodes` 相当が成功する。
 - nodeが `Ready` でない場合は失敗する。

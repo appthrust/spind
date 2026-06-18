@@ -28,8 +28,8 @@ func New(options *Options, runtime *cliruntime.Runtime) *cobra.Command {
 		},
 	}
 	command.Flags().StringVar(&options.VM, "vm", "", "Source VM name.")
-	command.Flags().BoolVar(&options.Kind, "kind", false, "Create a kind-ready snapshot.")
-	command.Flags().StringVar(&options.Kubeconfig, "kubeconfig", "", "Host kubeconfig path for kind-ready snapshot. Defaults to KUBECONFIG or ~/.kube/config.")
-	command.Flags().StringVar(&options.Context, "context", "", "Kubeconfig context for kind-ready snapshot. Defaults to current-context.")
+	command.Flags().StringVar(&options.K8s, "k8s", "", "Create a Kubernetes-ready snapshot for distribution: kind or k3d.")
+	command.Flags().StringVar(&options.Kubeconfig, "kubeconfig", "", "Host kubeconfig path for Kubernetes-ready snapshot. Defaults to KUBECONFIG or ~/.kube/config.")
+	command.Flags().StringVar(&options.Context, "context", "", "Kubeconfig context for Kubernetes-ready snapshot. Defaults to current-context.")
 	return command
 }

@@ -31,6 +31,9 @@ func (m *Manager) SnapshotCreateWithOptions(ctx context.Context, snapshotName st
 	if err := validateStoreName(vmName); err != nil {
 		return fmt.Errorf("VM %q: %w", vmName, err)
 	}
+	if options.K8s != "" && options.K8s != spindkind.DistributionKind && options.K8s != spindkind.DistributionK3d {
+		return fmt.Errorf("unsupported Kubernetes distribution %q", options.K8s)
+	}
 
 	vmDir := filepath.Join(m.VMStore, vmName)
 	var metadata spindvm.Metadata
@@ -163,6 +166,7 @@ func (m *Manager) createCloudHypervisorSnapshot(ctx context.Context, snapshotNam
 	}
 	if kindMetadata != nil {
 		snapshot.KindReady = true
+		snapshot.K8sDistribution = kindMetadata.Distribution
 	}
 	if err := writeJSON(filepath.Join(tmpDir, snapshotMetadataName), snapshot, 0o644); err != nil {
 		return fmt.Errorf("write snapshot metadata: %w", err)
@@ -247,6 +251,7 @@ func (m *Manager) createVirtualizationFrameworkSnapshot(ctx context.Context, sna
 	snapshot.NetworkMAC = config.NetworkMAC
 	if kindMetadata != nil {
 		snapshot.KindReady = true
+		snapshot.K8sDistribution = kindMetadata.Distribution
 	}
 	if err := writeJSON(filepath.Join(tmpDir, snapshotMetadataName), snapshot, 0o644); err != nil {
 		return fmt.Errorf("write snapshot metadata: %w", err)

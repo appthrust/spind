@@ -1,0 +1,11 @@
+name: k3d-sample
+image: docker
+k8s: k3d
+setup:
+  - "k3d cluster create k3d-sample --registry-create k3d-sample-registry --kubeconfig-update-default=false"
+  - 'k3d kubeconfig get k3d-sample > "$SPIND_KUBECONFIG"'
+  - "kubectl --context k3d-k3d-sample wait node --all --for=condition=Ready --timeout=180s"
+  - "helm install cert-manager oci://quay.io/jetstack/charts/cert-manager --version v1.20.2 --namespace cert-manager --create-namespace --set crds.enabled=true"
+  - "kubectl --context k3d-k3d-sample --namespace cert-manager rollout status deployment/cert-manager --timeout=300s"
+  - "kubectl --context k3d-k3d-sample --namespace cert-manager rollout status deployment/cert-manager-cainjector --timeout=300s"
+  - "kubectl --context k3d-k3d-sample --namespace cert-manager rollout status deployment/cert-manager-webhook --timeout=300s"

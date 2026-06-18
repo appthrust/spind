@@ -9,24 +9,25 @@ import (
 )
 
 type SnapshotInfo struct {
-	Name           string             `json:"name"`
-	SourceVM       string             `json:"sourceVM,omitempty"`
-	Backend        string             `json:"backend,omitempty"`
-	CreatedAt      string             `json:"createdAt,omitempty"`
-	CPUCount       int                `json:"cpuCount,omitempty"`
-	MemoryMiB      int                `json:"memoryMiB,omitempty"`
-	ExecPort       uint32             `json:"execPort,omitempty"`
-	KernelCommand  string             `json:"kernelCommand,omitempty"`
-	DiskSizeBytes  int64              `json:"diskSizeBytes"`
-	StateSizeBytes int64              `json:"stateSizeBytes"`
-	TotalSizeBytes int64              `json:"totalSizeBytes"`
-	Health         string             `json:"health"`
-	HealthMessage  string             `json:"healthMessage,omitempty"`
-	SnapshotDir    string             `json:"snapshotDir"`
-	KindReady      bool               `json:"kindReady,omitempty"`
-	KindMetadata   spindkind.Metadata `json:"kindMetadata,omitempty"`
-	KindTemplate   bool               `json:"kindKubeconfigTemplate,omitempty"`
-	Artifacts      []SnapshotArtifact `json:"artifacts,omitempty"`
+	Name            string             `json:"name"`
+	SourceVM        string             `json:"sourceVM,omitempty"`
+	Backend         string             `json:"backend,omitempty"`
+	CreatedAt       string             `json:"createdAt,omitempty"`
+	CPUCount        int                `json:"cpuCount,omitempty"`
+	MemoryMiB       int                `json:"memoryMiB,omitempty"`
+	ExecPort        uint32             `json:"execPort,omitempty"`
+	KernelCommand   string             `json:"kernelCommand,omitempty"`
+	DiskSizeBytes   int64              `json:"diskSizeBytes"`
+	StateSizeBytes  int64              `json:"stateSizeBytes"`
+	TotalSizeBytes  int64              `json:"totalSizeBytes"`
+	Health          string             `json:"health"`
+	HealthMessage   string             `json:"healthMessage,omitempty"`
+	SnapshotDir     string             `json:"snapshotDir"`
+	K8sReady        bool               `json:"k8sReady,omitempty"`
+	K8sDistribution string             `json:"k8sDistribution,omitempty"`
+	K8sMetadata     spindkind.Metadata `json:"k8sMetadata,omitempty"`
+	K8sTemplate     bool               `json:"k8sKubeconfigTemplate,omitempty"`
+	Artifacts       []SnapshotArtifact `json:"artifacts,omitempty"`
 }
 
 type SnapshotArtifact struct {
@@ -47,24 +48,25 @@ func NewSnapshotInfo(info spindsnapshot.Info) SnapshotInfo {
 		})
 	}
 	return SnapshotInfo{
-		Name:           info.Name,
-		SourceVM:       info.SourceVM,
-		Backend:        info.Backend,
-		CreatedAt:      FormatTime(info.CreatedAt),
-		CPUCount:       info.CPUCount,
-		MemoryMiB:      info.MemoryMiB,
-		ExecPort:       info.ExecPort,
-		KernelCommand:  info.KernelCommand,
-		DiskSizeBytes:  info.DiskSizeBytes,
-		StateSizeBytes: info.StateSizeBytes,
-		TotalSizeBytes: info.TotalSizeBytes,
-		Health:         info.Health,
-		HealthMessage:  info.HealthMessage,
-		SnapshotDir:    info.SnapshotDir,
-		KindReady:      info.KindReady,
-		KindMetadata:   info.KindMetadata,
-		KindTemplate:   info.KindTemplate,
-		Artifacts:      artifacts,
+		Name:            info.Name,
+		SourceVM:        info.SourceVM,
+		Backend:         info.Backend,
+		CreatedAt:       FormatTime(info.CreatedAt),
+		CPUCount:        info.CPUCount,
+		MemoryMiB:       info.MemoryMiB,
+		ExecPort:        info.ExecPort,
+		KernelCommand:   info.KernelCommand,
+		DiskSizeBytes:   info.DiskSizeBytes,
+		StateSizeBytes:  info.StateSizeBytes,
+		TotalSizeBytes:  info.TotalSizeBytes,
+		Health:          info.Health,
+		HealthMessage:   info.HealthMessage,
+		SnapshotDir:     info.SnapshotDir,
+		K8sReady:        info.KindReady,
+		K8sDistribution: info.K8sDistribution,
+		K8sMetadata:     info.KindMetadata,
+		K8sTemplate:     info.KindTemplate,
+		Artifacts:       artifacts,
 	}
 }
 
@@ -122,12 +124,13 @@ func PrintSnapshotInfo(stdout io.Writer, info spindsnapshot.Info) {
 	}
 	fmt.Fprintf(stdout, "snapshotDir: %s\n", info.SnapshotDir)
 	if info.KindReady {
-		fmt.Fprintln(stdout, "kindReady: true")
-		fmt.Fprintf(stdout, "kindContext: %s\n", DisplayValue(info.KindMetadata.SourceContext))
-		fmt.Fprintf(stdout, "kindCluster: %s\n", DisplayValue(info.KindMetadata.SourceCluster))
-		fmt.Fprintf(stdout, "kindKubeconfigTemplate: %t\n", info.KindTemplate)
+		fmt.Fprintln(stdout, "k8sReady: true")
+		fmt.Fprintf(stdout, "k8sDistribution: %s\n", DisplayValue(info.K8sDistribution))
+		fmt.Fprintf(stdout, "k8sContext: %s\n", DisplayValue(info.KindMetadata.SourceContext))
+		fmt.Fprintf(stdout, "k8sCluster: %s\n", DisplayValue(info.KindMetadata.SourceCluster))
+		fmt.Fprintf(stdout, "k8sKubeconfigTemplate: %t\n", info.KindTemplate)
 		if len(info.KindMetadata.Nodes) > 0 {
-			fmt.Fprintln(stdout, "kindNodes:")
+			fmt.Fprintln(stdout, "k8sNodes:")
 			for _, node := range info.KindMetadata.Nodes {
 				fmt.Fprintf(stdout, "  %s\tready=%t\n", node.Name, node.Ready)
 			}
