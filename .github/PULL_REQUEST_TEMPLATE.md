@@ -8,8 +8,7 @@
 
 ## macOS VZ test
 
-GitHub-hosted macOS runner では VZ の実テストを安定して実行できません。
-必要な場合は、物理 Apple Silicon Mac 上で手動確認してください。
+GitHub-hosted macOS runner では VZ の実テストを安定して実行できません。必要な場合は、物理 Apple Silicon Mac 上で手動確認してください。
 
 - [ ] Not run
 - [ ] Run on physical Apple Silicon macOS
