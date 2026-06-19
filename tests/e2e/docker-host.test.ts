@@ -26,6 +26,27 @@ test("Docker host endpoint works", async () => {
   }
 });
 
+test("Docker host snapshot restore keeps DNS usable", async () => {
+  await using env = await createE2EEnv("docker-host");
+  const { $, baseVM, snapshot, workVM } = env;
+
+  await $`spind vm create ${baseVM} --image docker`;
+  await $`spind vm start ${baseVM}`;
+
+  const baseDocker = env.docker$(baseVM);
+  await dockerPull(baseDocker, "busybox:latest");
+  await $`spind vm exec ${baseVM} -- getent hosts example.com`;
+  await baseDocker`docker run --rm busybox nslookup example.com`;
+
+  await $`spind snapshot create ${snapshot} --vm ${baseVM}`;
+  await $`spind vm create ${workVM} --snapshot ${snapshot}`;
+  await $`spind vm start ${workVM}`;
+
+  const restoredDocker = env.docker$(workVM);
+  await $`spind vm exec ${workVM} -- getent hosts example.com`;
+  await restoredDocker`docker run --rm busybox nslookup example.com`;
+});
+
 type Env = Awaited<ReturnType<typeof createE2EEnv>>;
 
 async function checkDockerHost({

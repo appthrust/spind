@@ -225,6 +225,43 @@ func TestCloudHypervisorArgsIncludeDockerPasstNetwork(t *testing.T) {
 	}
 }
 
+func TestCloudHypervisorMemoryRestoreMode(t *testing.T) {
+	tests := []struct {
+		name   string
+		config cloudhypervisor.Config
+		want   string
+	}{
+		{
+			name: "passt vhost-user",
+			config: cloudhypervisor.Config{
+				NetBackend:    cloudHypervisorNetworkBackendPasst,
+				NetSocketPath: "passt.sock",
+			},
+			want: "copy",
+		},
+		{
+			name: "tap",
+			config: cloudhypervisor.Config{
+				NetBackend: cloudHypervisorNetworkBackendTap,
+				NetTapName: "tap0",
+			},
+			want: "ondemand",
+		},
+		{
+			name: "no network",
+			want: "ondemand",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := cloudHypervisorMemoryRestoreMode(tt.config); got != tt.want {
+				t.Fatalf("cloudHypervisorMemoryRestoreMode() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestCreateVirtualizationFrameworkWritesMultipleDisks(t *testing.T) {
 	manager := newTestManager(t)
 	imageDir := filepath.Join(manager.ImageStore, "docker")
