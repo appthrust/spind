@@ -280,7 +280,7 @@ func (m *Manager) startCloudHypervisorRestore(ctx context.Context, name string, 
 	}
 
 	args := []string{
-		"--restore", fmt.Sprintf("source_url=file://%s,memory_restore_mode=ondemand", restoreDir),
+		"--restore", fmt.Sprintf("source_url=file://%s,memory_restore_mode=%s", restoreDir, cloudHypervisorMemoryRestoreMode(config)),
 		"--api-socket", fmt.Sprintf("path=%s", config.APISocketPath),
 		"--log-file", config.VMMLogPath,
 		"--event-monitor", fmt.Sprintf("path=%s", config.EventLogPath),
@@ -520,6 +520,13 @@ func cloudHypervisorRequiresSharedMemory(config cloudhypervisor.Config) bool {
 		return true
 	}
 	return config.NetBackend == cloudHypervisorNetworkBackendPasst && config.NetSocketPath != ""
+}
+
+func cloudHypervisorMemoryRestoreMode(config cloudhypervisor.Config) string {
+	if config.NetBackend == cloudHypervisorNetworkBackendPasst && config.NetSocketPath != "" {
+		return "copy"
+	}
+	return "ondemand"
 }
 
 func disableCloudHypervisorDockerNetwork(config *cloudhypervisor.Config) {

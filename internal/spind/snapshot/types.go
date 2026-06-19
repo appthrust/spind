@@ -26,28 +26,30 @@ type Metadata struct {
 	MachineIdentifier string                    `json:"machineIdentifier,omitempty"`
 	NetworkMAC        string                    `json:"networkMac,omitempty"`
 	KindReady         bool                      `json:"kindReady,omitempty"`
+	K8sDistribution   string                    `json:"k8sDistribution,omitempty"`
 	Disks             []spindimage.DiskMetadata `json:"disks,omitempty"`
 }
 
 type Info struct {
-	Name           string
-	SourceVM       string
-	Backend        string
-	CreatedAt      time.Time
-	CPUCount       int
-	MemoryMiB      int
-	ExecPort       uint32
-	KernelCommand  string
-	DiskSizeBytes  int64
-	StateSizeBytes int64
-	TotalSizeBytes int64
-	Health         string
-	HealthMessage  string
-	SnapshotDir    string
-	KindReady      bool
-	KindMetadata   spindkind.Metadata
-	KindTemplate   bool
-	Artifacts      []ArtifactInfo
+	Name            string
+	SourceVM        string
+	Backend         string
+	CreatedAt       time.Time
+	CPUCount        int
+	MemoryMiB       int
+	ExecPort        uint32
+	KernelCommand   string
+	DiskSizeBytes   int64
+	StateSizeBytes  int64
+	TotalSizeBytes  int64
+	Health          string
+	HealthMessage   string
+	SnapshotDir     string
+	KindReady       bool
+	K8sDistribution string
+	KindMetadata    spindkind.Metadata
+	KindTemplate    bool
+	Artifacts       []ArtifactInfo
 }
 
 type ArtifactInfo struct {
@@ -58,7 +60,7 @@ type ArtifactInfo struct {
 }
 
 type CreateOptions struct {
-	Kind           bool
+	K8s            string
 	KubeconfigPath string
 	Context        string
 }

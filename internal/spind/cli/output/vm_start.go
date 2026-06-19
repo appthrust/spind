@@ -76,3 +76,20 @@ func PrintKubernetesStartLine(stdout io.Writer, stderr io.Writer, info spindvm.I
 		fmt.Fprintf(stderr, "kubernetesLogPath: %s\n", info.KubernetesRelayLogPath)
 	}
 }
+
+func PrintRegistryStartLine(stdout io.Writer, stderr io.Writer, info spindvm.Info) {
+	if info.RegistryURL == "" && info.RegistryLastError == "" {
+		return
+	}
+	if info.RegistryReady {
+		fmt.Fprintf(stdout, "registry: %s\n", info.RegistryURL)
+		return
+	}
+	fmt.Fprintln(stdout, "registry: unavailable")
+	if info.RegistryLastError != "" {
+		fmt.Fprintf(stderr, "warning: registry unavailable: %s\n", info.RegistryLastError)
+	}
+	if info.RegistryRelayLogPath != "" {
+		fmt.Fprintf(stderr, "registryLogPath: %s\n", info.RegistryRelayLogPath)
+	}
+}

@@ -16,7 +16,7 @@ test("spind up provisions a project snapshot and starts the project VM", async (
     [
       `name: ${projectName}`,
       "image: docker",
-      "kind: true",
+      "k8s: kind",
       "setup:",
       yamlListItem(`kind create cluster --name ${projectName}`),
       yamlListItem(

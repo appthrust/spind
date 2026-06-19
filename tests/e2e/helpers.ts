@@ -14,10 +14,12 @@ const createVerbose$ = create$({ verbose: e2eEnv.execaVerbose });
 const CLOUD_HYPERVISOR_BACKEND = "cloud-hypervisor";
 export const DOCKER_HOST_PREREQUISITES = "docker-host";
 export const KIND_READY_PREREQUISITES = "kind-ready";
+export const K3D_READY_PREREQUISITES = "k3d-ready";
 
 export type E2EPrerequisites =
   | typeof DOCKER_HOST_PREREQUISITES
   | typeof KIND_READY_PREREQUISITES
+  | typeof K3D_READY_PREREQUISITES
   | "vm";
 
 export class E2EEnv {
@@ -180,12 +182,17 @@ async function requireE2EPrerequisites(
 
   if (
     prerequisites === DOCKER_HOST_PREREQUISITES ||
-    prerequisites === KIND_READY_PREREQUISITES
+    prerequisites === KIND_READY_PREREQUISITES ||
+    prerequisites === K3D_READY_PREREQUISITES
   ) {
     await requireCommand("docker");
   }
   if (prerequisites === KIND_READY_PREREQUISITES) {
     await requireCommand("kind");
+    await requireCommand("kubectl");
+  }
+  if (prerequisites === K3D_READY_PREREQUISITES) {
+    await requireCommand("k3d");
     await requireCommand("kubectl");
   }
 }

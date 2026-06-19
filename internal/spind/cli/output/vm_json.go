@@ -19,6 +19,7 @@ type VMInfo struct {
 	CloudHypervisorVsockPath      string           `json:"cloudHypervisorVsockPath,omitempty"`
 	Docker                        DockerStatus     `json:"docker"`
 	Kubernetes                    KubernetesStatus `json:"kubernetes"`
+	Registry                      RegistryStatus   `json:"registry,omitempty"`
 	DockerSocketPath              string           `json:"dockerSocketPath,omitempty"`
 	DockerEndpointURI             string           `json:"dockerEndpointUri,omitempty"`
 	DockerRelayPID                int              `json:"dockerRelayPid,omitempty"`
@@ -74,6 +75,15 @@ type VMInfo struct {
 	KubernetesAPIServerTargetPort int              `json:"kubernetesApiServerTargetPort,omitempty"`
 	KubernetesRelayPID            int              `json:"kubernetesRelayPid,omitempty"`
 	KubernetesRelayLogPath        string           `json:"kubernetesRelayLogPath,omitempty"`
+	RegistryReady                 bool             `json:"registryReady"`
+	RegistryLastError             string           `json:"registryLastError,omitempty"`
+	RegistryURL                   string           `json:"registryUrl,omitempty"`
+	RegistryPort                  int              `json:"registryPort,omitempty"`
+	RegistryTargetPort            int              `json:"registryTargetPort,omitempty"`
+	RegistryRelayPID              int              `json:"registryRelayPid,omitempty"`
+	RegistryRelayLogPath          string           `json:"registryRelayLogPath,omitempty"`
+	RegistryHostFromCluster       string           `json:"registryHostFromCluster,omitempty"`
+	RegistryLocalHostingUpdated   bool             `json:"registryLocalHostingUpdated"`
 	SerialLogPath                 string           `json:"serialLogPath,omitempty"`
 	BackendLogPath                string           `json:"backendLogPath,omitempty"`
 	EventLogPath                  string           `json:"eventLogPath,omitempty"`
@@ -110,6 +120,18 @@ type KubernetesStatus struct {
 	RelayPID   int    `json:"relayPid,omitempty"`
 }
 
+type RegistryStatus struct {
+	Ready                       bool   `json:"ready"`
+	URL                         string `json:"url,omitempty"`
+	RelayPort                   int    `json:"relayPort,omitempty"`
+	TargetPort                  int    `json:"targetPort,omitempty"`
+	RelayPID                    int    `json:"relayPid,omitempty"`
+	Log                         string `json:"log,omitempty"`
+	Reason                      string `json:"reason,omitempty"`
+	HostFromCluster             string `json:"hostFromCluster,omitempty"`
+	LocalRegistryHostingUpdated bool   `json:"localRegistryHostingUpdated"`
+}
+
 func NewVMInfo(info spindvm.Info) VMInfo {
 	return VMInfo{
 		Name:                          info.Name,
@@ -128,6 +150,7 @@ func NewVMInfo(info spindvm.Info) VMInfo {
 		CloudHypervisorVsockPath:      info.CloudHypervisorVsockPath,
 		Docker:                        newDockerStatus(info),
 		Kubernetes:                    newKubernetesStatus(info),
+		Registry:                      newRegistryStatus(info),
 		DockerSocketPath:              info.DockerSocketPath,
 		DockerEndpointURI:             info.DockerEndpointURI,
 		DockerRelayPID:                info.DockerRelayPID,
@@ -183,6 +206,15 @@ func NewVMInfo(info spindvm.Info) VMInfo {
 		KubernetesAPIServerTargetPort: info.KubernetesAPIServerTargetPort,
 		KubernetesRelayPID:            info.KubernetesRelayPID,
 		KubernetesRelayLogPath:        info.KubernetesRelayLogPath,
+		RegistryReady:                 info.RegistryReady,
+		RegistryLastError:             info.RegistryLastError,
+		RegistryURL:                   info.RegistryURL,
+		RegistryPort:                  info.RegistryPort,
+		RegistryTargetPort:            info.RegistryTargetPort,
+		RegistryRelayPID:              info.RegistryRelayPID,
+		RegistryRelayLogPath:          info.RegistryRelayLogPath,
+		RegistryHostFromCluster:       info.RegistryHostFromCluster,
+		RegistryLocalHostingUpdated:   info.RegistryLocalHostingUpdated,
 		SerialLogPath:                 info.SerialLogPath,
 		BackendLogPath:                info.BackendLogPath,
 		EventLogPath:                  info.EventLogPath,
@@ -190,6 +222,20 @@ func NewVMInfo(info spindvm.Info) VMInfo {
 		UpdatedAt:                     FormatTime(info.UpdatedAt),
 		LastStartDuration:             FormatOptionalDuration(info.LastStartDuration),
 		LogPaths:                      info.LogPaths,
+	}
+}
+
+func newRegistryStatus(info spindvm.Info) RegistryStatus {
+	return RegistryStatus{
+		Ready:                       info.RegistryReady,
+		URL:                         info.RegistryURL,
+		RelayPort:                   info.RegistryPort,
+		TargetPort:                  info.RegistryTargetPort,
+		RelayPID:                    info.RegistryRelayPID,
+		Log:                         info.RegistryRelayLogPath,
+		Reason:                      info.RegistryLastError,
+		HostFromCluster:             info.RegistryHostFromCluster,
+		LocalRegistryHostingUpdated: info.RegistryLocalHostingUpdated,
 	}
 }
 

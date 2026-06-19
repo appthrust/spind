@@ -16,7 +16,9 @@
     "terraform": "latest",
     "kind": "latest",
     "kubectl": "latest",
-    "kubernetes-helm": "latest"
+    "kubernetes-helm": "latest",
+    "k3d": "latest",
+    "tilt": "latest"
   },
   "shell": {
     "init_hook": ["export PATH=\"$PWD/bin:$PATH\"", "echo 'spind devbox ready'"]

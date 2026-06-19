@@ -17,6 +17,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -221,6 +222,43 @@ func TestCloudHypervisorArgsIncludeDockerPasstNetwork(t *testing.T) {
 	}
 	if !strings.Contains(joined, "--memory size=2048M,shared=on") {
 		t.Fatalf("cloudHypervisorArgs = %q, want shared memory for passt", joined)
+	}
+}
+
+func TestCloudHypervisorMemoryRestoreMode(t *testing.T) {
+	tests := []struct {
+		name   string
+		config cloudhypervisor.Config
+		want   string
+	}{
+		{
+			name: "passt vhost-user",
+			config: cloudhypervisor.Config{
+				NetBackend:    cloudHypervisorNetworkBackendPasst,
+				NetSocketPath: "passt.sock",
+			},
+			want: "copy",
+		},
+		{
+			name: "tap",
+			config: cloudhypervisor.Config{
+				NetBackend: cloudHypervisorNetworkBackendTap,
+				NetTapName: "tap0",
+			},
+			want: "ondemand",
+		},
+		{
+			name: "no network",
+			want: "ondemand",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := cloudHypervisorMemoryRestoreMode(tt.config); got != tt.want {
+				t.Fatalf("cloudHypervisorMemoryRestoreMode() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 
@@ -1859,6 +1897,58 @@ func TestUnknownVMFails(t *testing.T) {
 	}
 	if _, err := manager.Stop(context.Background(), "missing"); err == nil {
 		t.Fatal("Stop returned nil error for missing VM")
+	}
+}
+
+func TestTCPRelayArgsUsesGuestIPWhenPreferred(t *testing.T) {
+	vmDir := t.TempDir()
+	args, err := tcpRelayArgs("work", vmDir, spindvm.Metadata{
+		Backend:  BackendVirtualizationFramework,
+		ExecUser: "spind",
+	}, spindvm.State{
+		ExecSocketPath:       filepath.Join(vmDir, "exec.sock"),
+		DockerGuestIPAddress: "192.168.64.202",
+	}, 49321, 40123, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"kubernetes-relay",
+		"work",
+		"--listen-port", "49321",
+		"--target-port", "40123",
+		"--guest-port", "0",
+		"--guest-ip", "192.168.64.202",
+	}
+	if !slices.Equal(args, want) {
+		t.Fatalf("args = %#v, want %#v", args, want)
+	}
+}
+
+func TestTCPRelayArgsKeepsSSHWhenGuestIPIsNotPreferred(t *testing.T) {
+	vmDir := t.TempDir()
+	args, err := tcpRelayArgs("work", vmDir, spindvm.Metadata{
+		Backend:  BackendVirtualizationFramework,
+		ExecUser: "spind",
+	}, spindvm.State{
+		ExecSocketPath:       filepath.Join(vmDir, "exec.sock"),
+		DockerGuestIPAddress: "192.168.64.202",
+	}, 49321, 40123, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"kubernetes-relay",
+		"work",
+		"--listen-port", "49321",
+		"--target-port", "40123",
+		"--guest-port", "0",
+		"--ssh-socket", filepath.Join(vmDir, "exec.sock"),
+		"--ssh-key", filepath.Join(vmDir, vmSSHPrivateKeyName),
+		"--ssh-user", "spind",
+	}
+	if !slices.Equal(args, want) {
+		t.Fatalf("args = %#v, want %#v", args, want)
 	}
 }
 

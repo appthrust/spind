@@ -39,7 +39,10 @@ type kubectlNode struct {
 
 func PrepareSnapshot(ctx context.Context, tmpDir string, dockerEndpointPath string, dockerReady bool, options SnapshotOptions) (*Metadata, error) {
 	if !dockerReady {
-		return nil, errors.New("kind-ready snapshot requires Docker API ready")
+		return nil, errors.New("Kubernetes-ready snapshot requires Docker API ready")
+	}
+	if options.Distribution != DistributionKind && options.Distribution != DistributionK3d {
+		return nil, fmt.Errorf("unsupported Kubernetes distribution %q", options.Distribution)
 	}
 	kubeconfigPath, err := ResolveKubeconfigPath(options.KubeconfigPath)
 	if err != nil {
@@ -61,7 +64,7 @@ func PrepareSnapshot(ctx context.Context, tmpDir string, dockerEndpointPath stri
 	if err != nil {
 		return nil, err
 	}
-	if err := ValidateKubeconfigMatchesDocker(ctx, dockerEndpointPath, sourceServer, targetPort); err != nil {
+	if err := ValidateKubeconfigMatchesDocker(ctx, dockerEndpointPath, options.Distribution, sourceServer, targetPort); err != nil {
 		return nil, err
 	}
 	nodes, err := KubectlReadyNodes(ctx, kubeconfigPath, contextName)
@@ -78,6 +81,7 @@ func PrepareSnapshot(ctx context.Context, tmpDir string, dockerEndpointPath stri
 	}
 	metadata := Metadata{
 		KindReady:             true,
+		Distribution:          options.Distribution,
 		SourceKubeconfigPath:  kubeconfigPath,
 		SourceContext:         contextName,
 		SourceCluster:         sourceCluster,
@@ -87,6 +91,15 @@ func PrepareSnapshot(ctx context.Context, tmpDir string, dockerEndpointPath stri
 		Nodes:                 nodes,
 		ReadyCheck:            "ok",
 		ReadyCheckCompletedAt: time.Now().UTC(),
+	}
+	if options.Distribution == DistributionK3d {
+		registry, err := K3dRegistry(ctx, dockerEndpointPath)
+		if err != nil {
+			return nil, err
+		}
+		metadata.RegistryTargetPort = registry.TargetPort
+		metadata.RegistryHost = registry.Host
+		metadata.RegistryHostFromCluster = registry.HostFromCluster
 	}
 	if err := store.WriteJSON(filepath.Join(kindDir, MetadataName), metadata, 0o644); err != nil {
 		return nil, fmt.Errorf("write kind metadata: %w", err)
@@ -174,29 +187,33 @@ func KubectlReadyNodes(ctx context.Context, kubeconfigPath string, contextName s
 	return nodes, nil
 }
 
-func ValidateKubeconfigMatchesDocker(ctx context.Context, dockerEndpointPath string, server string, serverPort int) error {
+func ValidateKubeconfigMatchesDocker(ctx context.Context, dockerEndpointPath string, distribution string, server string, serverPort int) error {
 	if dockerEndpointPath == "" {
-		return errors.New("kind-ready snapshot requires Docker endpoint path")
+		return errors.New("Kubernetes-ready snapshot requires Docker endpoint path")
 	}
-	publishedPorts, err := ControlPlanePublishedPorts(ctx, dockerEndpointPath)
+	publishedPorts, err := APIServerPublishedPorts(ctx, dockerEndpointPath, distribution)
 	if err != nil {
-		return fmt.Errorf("list kind control-plane Docker ports: %w", err)
+		return fmt.Errorf("list Kubernetes API Docker ports: %w", err)
 	}
-	return ValidateServerPublishedPort(server, serverPort, publishedPorts)
+	return ValidateDistributionServerPublishedPort(distribution, server, serverPort, publishedPorts)
 }
 
-func ControlPlanePublishedPorts(ctx context.Context, dockerEndpointPath string) ([]uint16, error) {
+func APIServerPublishedPorts(ctx context.Context, dockerEndpointPath string, distribution string) ([]uint16, error) {
 	containers, err := spinddocker.ListContainers(ctx, dockerEndpointPath)
 	if err != nil {
 		return nil, err
 	}
-	return ControlPlanePublishedPortsFromContainers(containers), nil
+	return APIServerPublishedPortsFromContainers(containers, distribution), nil
 }
 
 func ControlPlanePublishedPortsFromContainers(containers []spinddocker.ContainerSummary) []uint16 {
+	return APIServerPublishedPortsFromContainers(containers, DistributionKind)
+}
+
+func APIServerPublishedPortsFromContainers(containers []spinddocker.ContainerSummary, distribution string) []uint16 {
 	seen := map[uint16]struct{}{}
 	for _, container := range containers {
-		if !isControlPlaneContainer(container) {
+		if !isAPIServerContainer(container, distribution) {
 			continue
 		}
 		for _, port := range container.Ports {
@@ -216,6 +233,17 @@ func ControlPlanePublishedPortsFromContainers(containers []spinddocker.Container
 	return ports
 }
 
+func isAPIServerContainer(container spinddocker.ContainerSummary, distribution string) bool {
+	switch distribution {
+	case DistributionKind:
+		return isControlPlaneContainer(container)
+	case DistributionK3d:
+		return container.Labels["k3d.role"] == "loadbalancer"
+	default:
+		return false
+	}
+}
+
 func isControlPlaneContainer(container spinddocker.ContainerSummary) bool {
 	if container.Labels["io.x-k8s.kind.role"] == "control-plane" {
 		return true
@@ -230,6 +258,10 @@ func isControlPlaneContainer(container spinddocker.ContainerSummary) bool {
 }
 
 func ValidateServerPublishedPort(server string, serverPort int, publishedPorts []uint16) error {
+	return ValidateDistributionServerPublishedPort(DistributionKind, server, serverPort, publishedPorts)
+}
+
+func ValidateDistributionServerPublishedPort(distribution string, server string, serverPort int, publishedPorts []uint16) error {
 	parsed, err := url.Parse(server)
 	if err != nil {
 		return fmt.Errorf("parse kubeconfig server: %w", err)
@@ -238,18 +270,28 @@ func ValidateServerPublishedPort(server string, serverPort int, publishedPorts [
 	if host == "" {
 		return fmt.Errorf("kubeconfig server %q has no host", server)
 	}
-	if !isLoopbackHost(host) {
+	if !isAcceptedServerHost(distribution, host) {
 		return fmt.Errorf("kubeconfig server %q is not a loopback host", server)
 	}
 	if len(publishedPorts) == 0 {
-		return errors.New("target VM has no published kind control-plane API port")
+		if distribution == DistributionKind {
+			return errors.New("target VM has no published kind control-plane API port")
+		}
+		return errors.New("target VM has no published Kubernetes API port")
 	}
 	for _, publishedPort := range publishedPorts {
 		if int(publishedPort) == serverPort {
 			return nil
 		}
 	}
-	return fmt.Errorf("kubeconfig server %q uses port %d, but target VM kind control-plane publishes %s", server, serverPort, formatPortList(publishedPorts))
+	return fmt.Errorf("kubeconfig server %q uses port %d, but target VM Kubernetes API publishes %s", server, serverPort, formatPortList(publishedPorts))
+}
+
+func isAcceptedServerHost(distribution string, host string) bool {
+	if distribution == DistributionK3d && host == "0.0.0.0" {
+		return true
+	}
+	return isLoopbackHost(host)
 }
 
 func isLoopbackHost(host string) bool {

@@ -41,6 +41,7 @@ func Run(ctx context.Context, cfg config.Config, options Options, stdout io.Writ
 		output.PrintHostShareStartLine(stdout, stderr, info)
 		output.PrintDockerStartLine(stdout, stderr, info)
 		output.PrintKubernetesStartLine(stdout, stderr, info)
+		output.PrintRegistryStartLine(stdout, stderr, info)
 	}
 	return 0
 }

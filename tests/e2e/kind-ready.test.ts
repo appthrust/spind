@@ -38,7 +38,7 @@ test("kind-ready snapshot restores a VM with Ready nodes", async () => {
   await $`kubectl --kubeconfig ${kubeconfig} --context ${context} wait node --all --for=condition=Ready --timeout=180s`;
 
   // Create snapshot
-  await $`spind snapshot create ${snapshot} --vm ${baseVM} --kind`;
+  await $`spind snapshot create ${snapshot} --vm ${baseVM} --k8s=kind`;
 
   // Create VM from snapshot
   await $`spind vm create ${workVM} --snapshot ${snapshot}`;

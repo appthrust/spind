@@ -122,7 +122,7 @@ Phase 11では、kind cluster起動済みDocker Host VMをsnapshot化し、resto
 
 - spindは初期スコープでは `kind create cluster` を包まない。
 - 利用者はhost側kindとDocker Host endpointを使ってkind clusterを作る。
-- `spind snapshot create --kind --kubeconfig <path> --context <name>` でkind-ready snapshotを作る。
+- `spind snapshot create --k8s=kind|k3d --kubeconfig <path> --context <name>` でKubernetes-ready snapshotを作る。
 - `spind vm start` はkind-ready snapshot由来VMにhost空きportを割り当て、VM別kubeconfigを生成する。
 - 標準kubeconfig pathは `~/.spind/vms/<name>/kubeconfig` とする。
 - `~/.kube/config` へのmergeは初期スコープ外にする。

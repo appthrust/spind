@@ -15,7 +15,7 @@ import (
 
 func TestLoadProjectUsesYAMLNameBeforeBasename(t *testing.T) {
 	root := t.TempDir()
-	writeFile(t, filepath.Join(root, "spind.yaml"), "name: custom\nimage: docker\nkind: true\nsetup:\n  - echo setup\n")
+	writeFile(t, filepath.Join(root, "spind.yaml"), "name: custom\nimage: docker\nk8s: kind\nsetup:\n  - echo setup\n")
 	chdir(t, root)
 
 	project, err := loadProject(".")
@@ -25,7 +25,7 @@ func TestLoadProjectUsesYAMLNameBeforeBasename(t *testing.T) {
 	if project.Name != "custom" || project.VMName != "custom" || project.ProvisioningName != "custom-provisioning" || project.SnapshotName != "custom-provisioned" {
 		t.Fatalf("project names = %#v", project)
 	}
-	if project.Image != "docker" || !project.Kind || len(project.Setup) != 1 || project.Setup[0] != "echo setup" {
+	if project.Image != "docker" || project.K8s != "kind" || len(project.Setup) != 1 || project.Setup[0] != "echo setup" {
 		t.Fatalf("project config = %#v", project)
 	}
 }

@@ -404,6 +404,7 @@ func (m *Manager) CreateFromSnapshot(ctx context.Context, name string, snapshotN
 		ExecPort:         snapshot.ExecPort,
 		RestoreStatePath: snapshotRestoreStatePath(vmDir, snapshot.Backend),
 		KindReady:        snapshot.KindReady,
+		K8sDistribution:  snapshot.K8sDistribution,
 	}
 	if snapshot.KindReady {
 		metadata.KubeconfigPath = filepath.Join(vmDir, "kubeconfig")
@@ -655,6 +656,15 @@ func (m *Manager) VMStatus(name string) (spindvm.Info, error) {
 		KubernetesAPIServerTargetPort: state.KubernetesAPIServerTargetPort,
 		KubernetesRelayPID:            state.KubernetesRelayPID,
 		KubernetesRelayLogPath:        state.KubernetesRelayLogPath,
+		RegistryReady:                 state.RegistryReady,
+		RegistryLastError:             state.RegistryLastError,
+		RegistryURL:                   state.RegistryURL,
+		RegistryPort:                  state.RegistryPort,
+		RegistryTargetPort:            state.RegistryTargetPort,
+		RegistryRelayPID:              state.RegistryRelayPID,
+		RegistryRelayLogPath:          state.RegistryRelayLogPath,
+		RegistryHostFromCluster:       state.RegistryHostFromCluster,
+		RegistryLocalHostingUpdated:   state.RegistryLocalHostingUpdated,
 		SerialLogPath:                 serialLogPath,
 		BackendLogPath:                backendLogPath,
 		EventLogPath:                  eventLogPath,
@@ -853,13 +863,14 @@ func vmLogPaths(vmDir string, backend string, state spindvm.State) []string {
 			state.EventLogPath,
 			state.HostShareVirtioFSLogPath,
 			state.KubernetesRelayLogPath,
+			state.RegistryRelayLogPath,
 			filepath.Join(vmDir, "cloud-hypervisor.log"),
 			filepath.Join(vmDir, "serial.log"),
 			filepath.Join(vmDir, "cloud-hypervisor-event.log"),
 			filepath.Join(vmDir, "virtiofsd.log"),
 		)
 	default:
-		candidates = append(candidates, state.KubernetesRelayLogPath, filepath.Join(vmDir, vmLogName))
+		candidates = append(candidates, state.KubernetesRelayLogPath, state.RegistryRelayLogPath, filepath.Join(vmDir, vmLogName))
 	}
 	seen := map[string]bool{}
 	paths := make([]string, 0, len(candidates))

@@ -3,7 +3,7 @@ package create
 type Options struct {
 	Name       string
 	VM         string
-	Kind       bool
+	K8s        string
 	Kubeconfig string
 	Context    string
 }

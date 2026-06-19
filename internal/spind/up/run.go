@@ -35,7 +35,7 @@ const (
 type projectConfig struct {
 	Name  string   `yaml:"name"`
 	Image string   `yaml:"image"`
-	Kind  bool     `yaml:"kind"`
+	K8s   string   `yaml:"k8s"`
 	Setup []string `yaml:"setup"`
 }
 
@@ -44,7 +44,7 @@ type project struct {
 	ConfigPath       string
 	Name             string
 	Image            string
-	Kind             bool
+	K8s              string
 	Setup            []string
 	VMName           string
 	ProvisioningName string
@@ -132,6 +132,7 @@ func run(ctx context.Context, cfg config.Config, options Options, stdout io.Writ
 	if info, err := manager.VMStatus(project.VMName); err == nil {
 		output.PrintDockerStartLine(stdout, stderr, info)
 		output.PrintKubernetesStartLine(stdout, stderr, info)
+		output.PrintRegistryStartLine(stdout, stderr, info)
 		PrintShellExports(stdout, info, os.Getenv("SHELL"))
 	}
 	return nil
@@ -167,6 +168,9 @@ func shellExportValues(info spindvm.Info) []shellExportValue {
 	}
 	if info.KubernetesReady && info.KubernetesKubeconfigPath != "" {
 		values = append(values, shellExportValue{Name: "KUBECONFIG", Value: info.KubernetesKubeconfigPath})
+	}
+	if info.RegistryReady && info.RegistryURL != "" {
+		values = append(values, shellExportValue{Name: "REGISTRY", Value: info.RegistryURL})
 	}
 	return values
 }
@@ -210,8 +214,8 @@ func provision(ctx context.Context, manager *vmstart.Manager, cfg config.Config,
 		}
 	}
 
-	createOptions := spindsnapshot.CreateOptions{Kind: project.Kind}
-	if project.Kind {
+	createOptions := spindsnapshot.CreateOptions{K8s: project.K8s}
+	if project.K8s != "" {
 		createOptions.KubeconfigPath = provisioningKubeconfigPath(cfg, project)
 	}
 	if err := manager.SnapshotCreateWithOptions(ctx, project.SnapshotName, project.ProvisioningName, createOptions); err != nil {
@@ -343,12 +347,16 @@ func loadProject(start string) (project, error) {
 	if err := storeName("image", image); err != nil {
 		return project{}, err
 	}
+	k8s := strings.TrimSpace(cfg.K8s)
+	if k8s != "" && k8s != "kind" && k8s != "k3d" {
+		return project{}, fmt.Errorf("k8s %q: supported values are kind or k3d", k8s)
+	}
 	return project{
 		Root:             root,
 		ConfigPath:       configPath,
 		Name:             name,
 		Image:            image,
-		Kind:             cfg.Kind,
+		K8s:              k8s,
 		Setup:            cfg.Setup,
 		VMName:           name,
 		ProvisioningName: name + "-provisioning",
